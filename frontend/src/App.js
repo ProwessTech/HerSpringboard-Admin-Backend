@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import ManageUsers from './ManageUsers';
 import CreateUserForm from './CreateUserForm';
 import './style.css';
+import UserManagement from './UserManagement';
 
 export default function App() {
   const [users, setUsers] = useState([]);
@@ -51,6 +52,8 @@ export default function App() {
             <button>Manage Users</button>
           </Link>
         </nav>
+
+        <UserManagement/>
 
         {isLoading ? (
           <div className="loading-state">Loading users...</div>

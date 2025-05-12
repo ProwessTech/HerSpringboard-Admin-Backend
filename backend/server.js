@@ -4,21 +4,29 @@ const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
 const bodyParser = require('body-parser');
 require('dotenv').config();
+
 const app = express();
 const port = 3001;
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+// Configure AWS
 AWS.config.update({
-  region: process.env.AWS_REGION
+  region: process.env.AWS_REGION,
 });
 
+// Create DynamoDB Document Client
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+// Middleware
 app.use(cors());
 app.use(bodyParser.json());
+
+// API Endpoints
+
+// Get all users
 app.get('/users', async (req, res) => {
   const params = {
     TableName: process.env.AWS_TABLE,
-    ProjectionExpression: 'userId, firstName, lastName, email, password, category, courseCompleted, coursesInProgress, emailVerified'
+    ProjectionExpression: 'userId, firstName, lastName, email, password, category, courseCompleted, coursesInProgress, emailVerified', //Added password here
   };
   try {
     const data = await dynamoDb.scan(params).promise();
@@ -27,6 +35,8 @@ app.get('/users', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Create a new user
 app.post('/users', async (req, res) => {
   const {
     email,
@@ -59,7 +69,7 @@ app.post('/users', async (req, res) => {
     password,
     profileUrl,
     registerType,
-    skills
+    skills,
   };
   const params = {
     TableName: process.env.AWS_TABLE,
@@ -72,27 +82,31 @@ app.post('/users', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Update an existing user
 app.put('/users/:id', async (req, res) => {
   const userId = req.params.id;
   const updates = req.body;
   const updateParams = {
     TableName: process.env.AWS_TABLE,
     Key: { userId },
-    UpdateExpression: `set 
-      email = :email, 
-      category = :category, 
-      courseCompleted = :courseCompleted, 
-      coursesInProgress = :coursesInProgress, 
-      emailVerified = :emailVerified, 
-      firstName = :firstName, 
-      gender = :gender, 
-      goal = :goal, 
-      hoursSpentThisWeek = :hoursSpentThisWeek, 
-      lastName = :lastName, 
-      password = :password, 
-      profileUrl = :profileUrl, 
-      registerType = :registerType, 
-      skills = :skills`,
+    UpdateExpression: `
+      set 
+        email = :email, 
+        category = :category, 
+        courseCompleted = :courseCompleted, 
+        coursesInProgress = :coursesInProgress, 
+        emailVerified = :emailVerified, 
+        firstName = :firstName, 
+        gender = :gender, 
+        goal = :goal, 
+        hoursSpentThisWeek = :hoursSpentThisWeek, 
+        lastName = :lastName, 
+        password = :password, 
+        profileUrl = :profileUrl, 
+        registerType = :registerType, 
+        skills = :skills
+    `,
     ExpressionAttributeValues: {
       ':email': updates.email,
       ':category': updates.category,
@@ -118,6 +132,8 @@ app.put('/users/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Delete a user
 app.delete('/users/:id', async (req, res) => {
   const userId = req.params.id;
   const deleteParams = {
@@ -132,15 +148,15 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
+// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
-
+// CORS configuration (optional, but recommended)
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: 'http://localhost:3000', // Or your frontend's URL
   optionsSuccessStatus: 200,
   credentials: true,
 };
-
 app.use(cors(corsOptions));

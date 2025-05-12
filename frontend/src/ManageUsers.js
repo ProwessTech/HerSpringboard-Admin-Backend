@@ -30,7 +30,7 @@ export default function ManageUsers({ users, fetchUsers }) {
       {view === 'create' && (
         <CreateUserForm
           onUserCreated={() => {
-            fetchUsers();
+            fetchUsers();  // Refresh user list after creating a new user
             setView('list');
           }}
         />
@@ -40,7 +40,7 @@ export default function ManageUsers({ users, fetchUsers }) {
         <EditUserForm
           user={editingUser}
           onUserUpdated={() => {
-            fetchUsers();
+            fetchUsers();  // Refresh user list after editing a user
             setEditingUser(null);
             setView('list');
           }}
@@ -52,19 +52,41 @@ export default function ManageUsers({ users, fetchUsers }) {
       )}
 
       {view === 'list' && (
-        <UserList
-          users={users}
-          onEdit={(user) => {
-            setEditingUser(user);
-            setView('edit');
-          }}
-          onDelete={async (userId) => {
-            await fetch(`http://localhost:3001/users/${userId}`, {
-              method: 'DELETE',
-            });
-            fetchUsers();
-          }}
-        />
+        <div className="user-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Category</th>
+                <th>Email Verified</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.userId}>
+                  <td>{user.firstName} {user.lastName}</td>
+                  <td>{user.email}</td>
+                  <td>{user.category}</td>
+                  <td>{user.emailVerified ? 'Yes' : 'No'}</td>
+                  <td>
+                    <button onClick={() => {
+                      setEditingUser(user);
+                      setView('edit');
+                    }}>Edit</button>
+                    <button onClick={async () => {
+                      await fetch(`http://localhost:3001/users/${user.userId}`, {
+                        method: 'DELETE',
+                      });
+                      fetchUsers();  // Refresh user list after deletion
+                    }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
