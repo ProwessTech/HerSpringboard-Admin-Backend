@@ -19,12 +19,15 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
     userId: '',
     createdBy: 'admin_ui', 
   });
+  const [error, setError] = useState(null);
   useEffect(() => {
     if (user) {
       setFormData({
         ...user,
-        emailVerified: user.emailVerified || false, 
+        emailVerified: user.emailVerified || false,
+        createdBy: 'admin_ui', 
       });
+      setError(null);
     }
   }, [user]);
   const handleChange = (e) => {
@@ -35,18 +38,31 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
     }));
   };
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  console.log('🔁 handleSubmit triggered');
+  setError(null);
 
-    await fetch(`http://localhost:3001/users/${user.userId}`, {
+  try {
+    const response = await fetch(`http://localhost:3001/users/${encodeURIComponent(user.email)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const updatedUser = await response.json();
+    console.log('User updated on server:', updatedUser);
 
     onUserUpdated(); 
-  };
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'Error updating user');
+  }
+};
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="form-container">
+      {error && <div style={{ color: 'red', marginBottom: '1em' }}>{error}</div>}
       <input
         name="firstName"
         placeholder="First Name"
@@ -67,14 +83,14 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
         value={formData.email}
         onChange={handleChange}
         required
+        type="email"
       />
       <input
         name="password"
         type="password"
-        placeholder="Password"
+        placeholder="Password (leave blank to keep unchanged)"
         value={formData.password}
         onChange={handleChange}
-        required
       />
       <input
         name="category"
@@ -118,6 +134,8 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
       <input
         name="hoursSpentThisWeek"
         placeholder="Hours Spent This Week"
+        type="number"
+        min="0"
         value={formData.hoursSpentThisWeek}
         onChange={handleChange}
       />
@@ -139,17 +157,12 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
         value={formData.skills}
         onChange={handleChange}
       />
-      <input
-        name="userId"
-        placeholder="User ID"
-        value={formData.userId}
-        onChange={handleChange}
-        required
-      />
-      <button type="submit">Save Changes</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
+      <div className="button-group" style={{ marginTop: '1em' }}>
+        <button type="submit">Save Changes</button>
+        <button type="button" onClick={onCancel} style={{ marginLeft: '1em' }}>
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }
-
-

@@ -3,40 +3,44 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const AWS = require('aws-sdk');
 const bodyParser = require('body-parser');
+console.log('ENV file path:', require('path').resolve('.env'));
+
 require('dotenv').config();
+console.log({
+  AWS_REGION: process.env.AWS_REGION,
+  AWS_TABLE: process.env.AWS_TABLE,
+  AWS_COURSES_TABLE: process.env.AWS_COURSES_TABLE,
+});
 
 const app = express();
 const port = 3001;
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  optionsSuccessStatus: 200,
+  credentials: true,
+};
 
-// Configure AWS
+app.use(cors(corsOptions));
 AWS.config.update({
   region: process.env.AWS_REGION,
 });
-
-// Create DynamoDB Document Client
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
-
-// Middleware
-app.use(cors());
 app.use(bodyParser.json());
 
-// API Endpoints
-
-// Get all users
 app.get('/users', async (req, res) => {
   const params = {
     TableName: process.env.AWS_TABLE,
-    ProjectionExpression: 'userId, firstName, lastName, email, password, category, courseCompleted, coursesInProgress, emailVerified', //Added password here
+    ProjectionExpression: 'userId, firstName, lastName, email, password, category, courseCompleted, coursesInProgress, emailVerified',
   };
   try {
     const data = await dynamoDb.scan(params).promise();
     res.json(data.Items);
   } catch (err) {
+    console.error('Error fetching users:', err); // <-- ADDED LOG
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create a new user
 app.post('/users', async (req, res) => {
   const {
     email,
@@ -79,84 +83,218 @@ app.post('/users', async (req, res) => {
     await dynamoDb.put(params).promise();
     res.json(newUser);
   } catch (err) {
+    console.error('Error creating user:', err); // <-- ADDED LOG
     res.status(500).json({ error: err.message });
   }
 });
 
-// Update an existing user
-app.put('/users/:id', async (req, res) => {
-  const userId = req.params.id;
+app.put('/users/:email', async (req, res) => {
+  const email = req.params.email;
   const updates = req.body;
+
+  console.log('Updating user with email:', email); // <-- ADDED LOG
+  console.log('Update data:', updates); // <-- ADDED LOG
+
+  const filteredUpdates = {};
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] !== undefined && updates[key] !== null) {
+      filteredUpdates[key] = updates[key];
+    }
+  });
+
+  // Remove email from updates because it's the partition key
+  delete filteredUpdates.email;
+
+  let updateExpParts = [];
+  let expAttrValues = {};
+
+  for (const [key, value] of Object.entries(filteredUpdates)) {
+    updateExpParts.push(`${key} = :${key}`);
+    expAttrValues[`:${key}`] = value;
+  }
+
+  if (updateExpParts.length === 0) {
+    return res.status(400).json({ error: 'No valid fields provided for update' });
+  }
+
+  const updateExpression = 'set ' + updateExpParts.join(', ');
+
   const updateParams = {
     TableName: process.env.AWS_TABLE,
-    Key: { userId },
-    UpdateExpression: `
-      set 
-        email = :email, 
-        category = :category, 
-        courseCompleted = :courseCompleted, 
-        coursesInProgress = :coursesInProgress, 
-        emailVerified = :emailVerified, 
-        firstName = :firstName, 
-        gender = :gender, 
-        goal = :goal, 
-        hoursSpentThisWeek = :hoursSpentThisWeek, 
-        lastName = :lastName, 
-        password = :password, 
-        profileUrl = :profileUrl, 
-        registerType = :registerType, 
-        skills = :skills
-    `,
-    ExpressionAttributeValues: {
-      ':email': updates.email,
-      ':category': updates.category,
-      ':courseCompleted': updates.courseCompleted,
-      ':coursesInProgress': updates.coursesInProgress,
-      ':emailVerified': updates.emailVerified,
-      ':firstName': updates.firstName,
-      ':gender': updates.gender,
-      ':goal': updates.goal,
-      ':hoursSpentThisWeek': updates.hoursSpentThisWeek,
-      ':lastName': updates.lastName,
-      ':password': updates.password,
-      ':profileUrl': updates.profileUrl,
-      ':registerType': updates.registerType,
-      ':skills': updates.skills,
-    },
+    Key: { email },
+    UpdateExpression: updateExpression,
+    ExpressionAttributeValues: expAttrValues,
     ReturnValues: 'ALL_NEW',
   };
+
   try {
     const result = await dynamoDb.update(updateParams).promise();
+    console.log('User update successful:', result.Attributes); // <-- ADDED LOG
     res.json(result.Attributes);
   } catch (err) {
+    console.error('Error updating user:', err); // <-- ADDED LOG
     res.status(500).json({ error: err.message });
   }
 });
 
-// Delete a user
-app.delete('/users/:id', async (req, res) => {
-  const userId = req.params.id;
-  const deleteParams = {
+app.delete('/users/:email', async (req, res) => {
+  const email = decodeURIComponent(req.params.email);
+
+  const params = {
     TableName: process.env.AWS_TABLE,
-    Key: { userId },
+    Key: { email },
+  };
+
+  try {
+    await dynamoDb.delete(params).promise();
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error); // <-- ADDED LOG
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+app.get('/courses', async (req, res) => {
+  const params = {
+    TableName: process.env.AWS_COURSES_TABLE,
   };
   try {
-    await dynamoDb.delete(deleteParams).promise();
-    res.json({ success: true });
+    const data = await dynamoDb.scan(params).promise();
+    res.json(data.Items);
   } catch (err) {
+    console.error('Error fetching courses:', err); // <-- ADDED LOG
     res.status(500).json({ error: err.message });
   }
 });
 
-// Start the server
+// POST create a new course
+app.post('/courses', async (req, res) => {
+  const {
+    userID = '',
+    category = '',
+    completed = false,
+    contents = '',
+    cost = '',
+    courseReview = '',
+    description = '',
+    enrolled = '',
+    estimatedDuration = '',
+    image = '',
+    lastUpdatedOn = '',
+    publishedOn = '',
+    rating = '',
+    requirements = '',
+    title = '',
+    whatWeCoverInCourse = '',
+    whatYouLearn = '',
+  } = req.body;
+
+  const newCourse = {
+    courseId: uuidv4(),
+    userID,
+    category,
+    completed,
+    contents,
+    cost,
+    courseReview,
+    description,
+    enrolled,
+    estimatedDuration,
+    image,
+    lastUpdatedOn,
+    publishedOn,
+    rating,
+    requirements,
+    title,
+    whatWeCoverInCourse,
+    whatYouLearn,
+  };
+
+  console.log("📦 Creating new course:", newCourse);
+
+  const params = {
+    TableName: process.env.AWS_COURSES_TABLE,
+    Item: newCourse,
+  };
+
+  try {
+    await dynamoDb.put(params).promise();
+    res.json(newCourse);
+  } catch (err) {
+    console.error('🔥 Error saving course:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT update a course by courseId
+app.put('/courses/:courseId', async (req, res) => {
+  const courseId = req.params.courseId;
+  const updates = req.body;
+
+  console.log('Updating course with id:', courseId); // <-- ADDED LOG
+  console.log('Update data:', updates); // <-- ADDED LOG
+
+  // Filter out undefined or null updates
+  const filteredUpdates = {};
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] !== undefined && updates[key] !== null) {
+      filteredUpdates[key] = updates[key];
+    }
+  });
+
+  // Remove courseId because it is the partition key
+  delete filteredUpdates.courseId;
+
+  let updateExpParts = [];
+  let expAttrValues = {};
+
+  for (const [key, value] of Object.entries(filteredUpdates)) {
+    updateExpParts.push(`${key} = :${key}`);
+    expAttrValues[`:${key}`] = value;
+  }
+
+  if (updateExpParts.length === 0) {
+    return res.status(400).json({ error: 'No valid fields provided for update' });
+  }
+
+  const updateExpression = 'set ' + updateExpParts.join(', ');
+
+  const updateParams = {
+    TableName: process.env.AWS_COURSES_TABLE,
+    Key: { courseId },
+    UpdateExpression: updateExpression,
+    ExpressionAttributeValues: expAttrValues,
+    ReturnValues: 'ALL_NEW',
+  };
+
+  try {
+    const result = await dynamoDb.update(updateParams).promise();
+    console.log('Course update successful:', result.Attributes); // <-- ADDED LOG
+    res.json(result.Attributes);
+  } catch (err) {
+    console.error('Error updating course:', err); // <-- ADDED LOG
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE a course by courseId
+app.delete('/courses/:courseId', async (req, res) => {
+  const courseId = req.params.courseId;
+
+  const params = {
+    TableName: process.env.AWS_COURSES_TABLE,
+    Key: { courseId },
+  };
+
+  try {
+    await dynamoDb.delete(params).promise();
+    res.status(200).json({ message: 'Course deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting course:', error); // <-- ADDED LOG
+    res.status(500).json({ error: 'Failed to delete course' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
-
-// CORS configuration (optional, but recommended)
-const corsOptions = {
-  origin: 'http://localhost:3000', // Or your frontend's URL
-  optionsSuccessStatus: 200,
-  credentials: true,
-};
-app.use(cors(corsOptions));
