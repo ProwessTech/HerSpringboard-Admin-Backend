@@ -3,7 +3,7 @@ import './style.css';
 export default function EditCourseForm({ course, onCourseUpdated, onCancel }) {
   const [formData, setFormData] = useState({
     courseId: '',
-    userID: '',
+    userId: '',
     category: '',
     completed: '',
     contents: '',
@@ -65,6 +65,7 @@ export default function EditCourseForm({ course, onCourseUpdated, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="form-container">
       {error && <div style={{ color: 'red', marginBottom: '1em' }}>{error}</div>}
+      
       <input
         name="courseId"
         placeholder="Course ID"
@@ -73,87 +74,87 @@ export default function EditCourseForm({ course, onCourseUpdated, onCancel }) {
         required
       />
       <input
-        name="userID"
+        name="userId"
         placeholder="User ID"
-        value={formData.userID}
+        value={formData.userId}
         onChange={handleChange}
       />
       <input
-        name="Category"
+        name="category"
         placeholder="Category"
-        value={formData.Category}
+        value={formData.category}
         onChange={handleChange}
       />
       <input
-        name="Completed"
+        name="completed"
         placeholder="Completed"
-        value={formData.Completed}
+        value={formData.completed}
         onChange={handleChange}
       />
       <input
-        name="Contents"
+        name="contents"
         placeholder="Contents"
-        value={formData.Contents}
+        value={formData.contents}
         onChange={handleChange}
       />
       <input
-        name="Cost"
+        name="cost"
         placeholder="Cost"
-        value={formData.Cost}
+        value={formData.cost}
         onChange={handleChange}
         type="number"
         min="0"
       />
       <input
-        name="CourseReview"
+        name="courseReview"
         placeholder="Course Review"
-        value={formData.CourseReview}
+        value={formData.courseReview}
         onChange={handleChange}
       />
       <input
-        name="Description"
+        name="description"
         placeholder="Description"
-        value={formData.Description}
+        value={formData.description}
         onChange={handleChange}
       />
       <input
-        name="Enrolled"
+        name="enrolled"
         placeholder="Enrolled"
-        value={formData.Enrolled}
+        value={formData.enrolled}
         onChange={handleChange}
         type="number"
         min="0"
       />
       <input
-        name="EstimatedDuration"
+        name="estimatedDuration"
         placeholder="Estimated Duration"
-        value={formData.EstimatedDuration}
+        value={formData.estimatedDuration}
         onChange={handleChange}
       />
       <input
-        name="Image"
+        name="image"
         placeholder="Image URL"
-        value={formData.Image}
+        value={formData.image}
         onChange={handleChange}
       />
       <input
-        name="LastUpdatedOn"
+        name="lastUpdatedOn"
         placeholder="Last Updated On (YYYY-MM-DD)"
-        value={formData.LastUpdatedOn}
+        value={formData.lastUpdatedOn}
         onChange={handleChange}
         type="date"
       />
       <input
-        name="PublishedOn"
+        name="publishedOn"
         placeholder="Published On (YYYY-MM-DD)"
-        value={formData.PublishedOn}
+        value={formData.publishedOn}
         onChange={handleChange}
         type="date"
       />
       <input
-        name="Rating"
+        name="rating"
         placeholder="Rating"
-        value={formData.Rating}
+        value={formData.rating}
         onChange={handleChange}
         type="number"
         step="0.1"
@@ -161,30 +162,31 @@ export default function EditCourseForm({ course, onCourseUpdated, onCancel }) {
         max="5"
       />
       <input
-        name="Requirements"
+        name="requirements"
         placeholder="Requirements"
-        value={formData.Requirements}
+        value={formData.requirements}
         onChange={handleChange}
       />
       <input
-        name="Title"
+        name="title"
         placeholder="Title"
-        value={formData.Title}
+        value={formData.title}
         onChange={handleChange}
         required
       />
       <input
-        name="WhatWeCoverInCourse"
+        name="whatWeCoverInCourse"
         placeholder="What We Cover In Course"
-        value={formData.WhatWeCoverInCourse}
+        value={formData.whatWeCoverInCourse}
         onChange={handleChange}
       />
       <input
-        name="WhatYouLearn"
+        name="whatYouLearn"
         placeholder="What You Learn"
-        value={formData.WhatYouLearn}
+        value={formData.whatYouLearn}
         onChange={handleChange}
       />
+      
       <div className="button-group" style={{ marginTop: '1em' }}>
         <button type="submit">Save Changes</button>
         <button type="button" onClick={onCancel} style={{ marginLeft: '1em' }}>

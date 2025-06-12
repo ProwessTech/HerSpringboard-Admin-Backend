@@ -3,7 +3,7 @@ import './style.css';
 export default function CreateCourseForm({ course, onCourseCreated, onCourseUpdated, onCancel }) {
   const [formData, setFormData] = useState({
     courseID: '',
-    userID: '',
+    userId: '',
     category: '',
     completed: false,
     contents: '',
@@ -33,7 +33,7 @@ export default function CreateCourseForm({ course, onCourseCreated, onCourseUpda
     } else {
       setFormData({
         courseID: '',
-        userID: '',
+        userId: '',
         category: '',
         completed: false,
         contents: '',
@@ -71,7 +71,7 @@ export default function CreateCourseForm({ course, onCourseCreated, onCourseUpda
         rating: Number(formData.rating) || 0,
       };
       const url = course
-        ? `http://localhost:3001/courses/${course.courseID || course.userID}`
+        ? `http://localhost:3001/courses/${course.courseID || course.userId}`
         : 'http://localhost:3001/courses';
       const method = course ? 'PUT' : 'POST';
       const response = await fetch(url, {
@@ -108,11 +108,11 @@ export default function CreateCourseForm({ course, onCourseCreated, onCourseUpda
         />
       </div>
       <div className="form-group">
-        <label htmlFor="userID">User ID (Creator):</label>
+        <label htmlFor="userId">User ID (Creator):</label>
         <input
-          name="userID"
+          name="userId"
           placeholder="User ID"
-          value={formData.userID}
+          value={formData.userId}
           onChange={handleChange}
         />
       </div>
