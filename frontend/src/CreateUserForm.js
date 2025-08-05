@@ -62,8 +62,8 @@ export default function CreateUserForm({ user, onUserCreated, onUserUpdated, onC
     dataToSend.hoursSpentThisWeek = Number(dataToSend.hoursSpentThisWeek) || 0;
     try {
       const url = user
-        ? `http://localhost:3001/users/${user.userId || user.email}`
-        : 'http://localhost:3001/users';
+        ? `http://localhost:3002/users/${user.userId || user.email}`
+        : 'http://localhost:3002/users';
       const method = user ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,

@@ -44,7 +44,7 @@ export default function EditCourseForm({ course, onCourseUpdated, onCancel }) {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:3001/courses/${encodeURIComponent(course.courseId)}`,
+        `http://localhost:3002/courses/${encodeURIComponent(course.courseId)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },

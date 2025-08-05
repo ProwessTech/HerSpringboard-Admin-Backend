@@ -5,7 +5,7 @@ import EditUserForm from './EditUserForm';
 import ManageCourses from './ManageCourses';
 import CreateCourseForm from './CreateCourseForm';
 import EditCourseForm from './EditCourseForm';
-export default function App() {
+export default function App({ onLogout }) {
   const [users, setUsers] = useState([]);
   const [courses, setCourses] = useState([]);
   const [userError, setUserError] = useState(null);
@@ -19,7 +19,7 @@ export default function App() {
   const fetchUsers = async () => {
     setIsUsersLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/users');
+      const response = await fetch('http://localhost:3002/users');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setUsers(data);
@@ -34,7 +34,7 @@ export default function App() {
   const fetchCourses = async () => {
     setIsCoursesLoading(true);
     try {
-      const response = await fetch('http://localhost:3001/courses');
+      const response = await fetch('http://localhost:3002/courses');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setCourses(data);
@@ -47,13 +47,10 @@ export default function App() {
     }
   };
   useEffect(() => {
-    if (mainView === 'manageUsers' && manageView === 'list') {
-      fetchUsers();
-    }
-    if (mainView === 'manageCourses' && manageView === 'list') {
-      fetchCourses();
-    }
+    if (mainView === 'manageUsers' && manageView === 'list') fetchUsers();
+    if (mainView === 'manageCourses' && manageView === 'list') fetchCourses();
   }, [mainView, manageView]);
+
   const handleEditUser = (user) => {
     setEditingUser(user);
     setManageView('edit');
@@ -61,7 +58,7 @@ export default function App() {
   const handleDeleteUser = async (email) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      const res = await fetch(`http://localhost:3001/users/${email}`, { method: 'DELETE' });
+      const res = await fetch(`http://localhost:3002/users/${email}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete user');
       await fetchUsers();
     } catch (err) {
@@ -75,7 +72,7 @@ export default function App() {
   const handleDeleteCourse = async (courseId, userId) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
     try {
-      const res = await fetch(`http://localhost:3001/courses/${courseId}`, {
+      const res = await fetch(`http://localhost:3002/courses/${courseId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
@@ -90,7 +87,7 @@ export default function App() {
     setEditingUser(null);
     setEditingCourse(null);
     setManageView('list');
-  };
+  }
   const styles = {
     container: {
       fontFamily: 'Segoe UI, sans-serif',
@@ -114,32 +111,24 @@ export default function App() {
       gap: '15px',
       justifyContent: 'center',
       padding: '20px 30px',
+      flexWrap: 'wrap',
     },
-    card: {
-      backgroundColor: '#fff',
+    button: {
+      padding: '16px 24px',
+      fontSize: '18px',
+      backgroundColor: '#0d3f8f',
+      color: '#fff',
+      border: 'none',
       borderRadius: '10px',
-      padding: '20px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      textAlign: 'center',
-      flex: 1,
-    },
-    grid: {
-      display: 'flex',
-      gap: '20px',
-      padding: '0 30px 30px',
+      cursor: 'pointer',
+      minWidth: '180px',
+      fontWeight: 'bold',
+      transition: '0.2s ease',
     },
     content: {
       padding: '0 30px 30px',
       width: '100%',
       maxWidth: '1000px',
-    },
-    button: {
-      padding: '10px 16px',
-      backgroundColor: '#0d3f8f',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '8px',
-      cursor: 'pointer',
     },
   };
   return (
@@ -147,65 +136,60 @@ export default function App() {
       <div style={styles.header}>Admin Dashboard</div>
 
       {mainView === 'main' && (
-        <div style={styles.topButtons}>
-          <button style={styles.button} onClick={() => { setMainView('manageUsers'); setManageView(''); }}>Manage Users</button>
-          <button style={styles.button} onClick={() => { setMainView('manageCourses'); setManageView(''); }}>Manage Courses</button>
-        </div>
-      )}
+     <div style={styles.topButtons}>
+    <button style={styles.button} onClick={() => { setMainView('manageUsers'); setManageView(''); }}>
+      Manage Users
+    </button>
+    <button style={styles.button} onClick={() => { setMainView('manageCourses'); setManageView(''); }}>
+      Manage Courses
+    </button>
+    <button style={styles.button} onClick={onLogout}>
+      Logout
+    </button>
+  </div>
+)}
       {(mainView === 'manageUsers' || mainView === 'manageCourses') && (
         <>
           {manageView === '' && (
             <div style={styles.topButtons}>
-              <button
-                style={styles.button}
-                onClick={() => {
-                  setManageView('create');
-                  mainView === 'manageUsers' ? setEditingUser(null) : setEditingCourse(null);
-                }}
-              >
+              <button style={styles.button} onClick={() => {
+                setManageView('create');
+                mainView === 'manageUsers' ? setEditingUser(null) : setEditingCourse(null);
+              }}>
                 {mainView === 'manageUsers' ? 'Create User' : 'Create Course'}
               </button>
-              <button
-                style={styles.button}
-                onClick={() => {
-                  setManageView('list');
-                  mainView === 'manageUsers' ? fetchUsers() : fetchCourses();
-                }}
-              >
+
+              <button style={styles.button} onClick={() => {
+                setManageView('list');
+                mainView === 'manageUsers' ? fetchUsers() : fetchCourses();
+              }}>
                 {mainView === 'manageUsers' ? 'User List' : 'Course List'}
               </button>
-              <button
-                style={styles.button}
-                onClick={() => {
-                  setMainView('main');
-                  setManageView('');
-                }}
-              >
+              <button style={styles.button} onClick={() => {
+                setMainView('main');
+                setManageView('');
+              }}>
                 Back
               </button>
             </div>
           )}
           {manageView !== '' && (
             <div style={styles.topButtons}>
-              <button
-                style={styles.button}
-                onClick={() => {
-                  if (manageView === 'edit') {
-                    setManageView('list'); 
-                  } else if (manageView === 'list' || manageView === 'create') {
-                    setManageView(''); 
-                  } else {
-                    setMainView('main'); 
-                  }
-                  setEditingUser(null);
-                  setEditingCourse(null);
-                }}
-              >
+              <button style={styles.button} onClick={() => {
+                if (manageView === 'edit') {
+                  setManageView('list');
+                } else if (manageView === 'list' || manageView === 'create') {
+                  setManageView('');
+                } else {
+                  setMainView('main');
+                }
+                setEditingUser(null);
+                setEditingCourse(null);
+              }}>
                 Back
               </button>
             </div>
           )}
-
           <div style={styles.content}>
             {mainView === 'manageUsers' ? (
               isUsersLoading ? (

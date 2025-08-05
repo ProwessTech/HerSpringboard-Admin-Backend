@@ -2,6 +2,9 @@
   "name": "manage-users",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:3002"
+,
+
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.788.0",
     "@testing-library/dom": "^10.4.0",
@@ -9,6 +12,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "aws-sdk": "^2.1692.0",
+    "axios": "^1.10.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
