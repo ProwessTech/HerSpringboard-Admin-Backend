@@ -245,8 +245,9 @@ app.delete('/courses/:courseId', async (req, res) => {
 //use static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+  res.send('Server is running Successfully');
 });
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
