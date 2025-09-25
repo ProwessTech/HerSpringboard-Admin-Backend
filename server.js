@@ -1,22 +1,29 @@
-const express = require('express');
-const cors = require('cors');
-const { v4: uuidv4 } = require('uuid');
-const AWS = require('aws-sdk');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import { v4 as uuidv4 } from 'uuid';
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+//render code
+import path from 'path';
+import { fileURLToPath } from 'url';
+dotenv.config();
 const app = express();
 const port = 3002;
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: 'https://her-springboard-admin.vercel.app',
   optionsSuccessStatus: 200,
   credentials: true,
 };
+// Get __dirname in ES module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-AWS.config.update({
-  region: process.env.AWS_REGION,
-});
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+
+const dynamoDb = DynamoDBDocumentClient.from(client);
 // ===== USERS =====
 app.get('/users', async (req, res) => {
   const params = {
@@ -31,6 +38,7 @@ app.get('/users', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.post('/users', async (req, res) => {
   const {
     email, category, courseCompleted, coursesInProgress, emailVerified,
@@ -92,15 +100,12 @@ app.put('/users/:email', async (req, res) => {
 app.patch('/users/:email/approval', async (req, res) => {
   const email = decodeURIComponent(req.params.email).toLowerCase();
   const { isApproved } = req.body;
-
   console.log("PATCH /users/:email/approval");
   console.log("Email:", email);
   console.log("Request Body:", req.body);
-
   if (!['approved', 'rejected'].includes(isApproved)) {
     return res.status(400).json({ error: 'Invalid approval status' });
   }
-
   const params = {
     TableName: process.env.AWS_TABLE,
     Key: { email },
@@ -110,18 +115,15 @@ app.patch('/users/:email/approval', async (req, res) => {
     },
     ReturnValues: 'UPDATED_NEW',
   };
-
   console.log("Params to DynamoDB:", params);
-
   try {
     const result = await dynamoDb.update(params).promise();
     res.status(200).json({ message: 'Approval status updated', updated: result.Attributes });
   } catch (err) {
-    console.error('❌ Error updating approval:', err.message, err);
+    console.error(':x: Error updating approval:', err.message, err);
     res.status(500).json({ error: 'Failed to update approval' });
   }
 });
-
 app.delete('/users/:email', async (req, res) => {
   const email = decodeURIComponent(req.params.email);
   const params = {
@@ -158,7 +160,6 @@ app.get('/courses', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post('/courses', async (req, res) => {
   const {
     userId = '', category = '', completed = false, contents = '', cost = '',
@@ -186,7 +187,6 @@ app.post('/courses', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.put('/courses/:courseId', async (req, res) => {
   const courseId = req.params.courseId;
   const { userId, ...updates } = req.body;
@@ -224,7 +224,6 @@ app.put('/courses/:courseId', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.delete('/courses/:courseId', async (req, res) => {
   const courseId = req.params.courseId;
   const { userId } = req.body;
@@ -243,7 +242,11 @@ app.delete('/courses/:courseId', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete course' });
   }
 });
-
-// app.listen(port, () => {
-//   console.log(`Server is running on http://localhost:${port}`);
-// });
+//use static files from the React app
+app.use(express.static(path.join(__dirname, 'client/build')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
