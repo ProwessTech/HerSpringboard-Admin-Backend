@@ -10,7 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 dotenv.config();
 const app = express();
-const port = 3002;
+const port = 3000;
 const corsOptions = {
   origin: 'https://her-springboard-admin.vercel.app',
   optionsSuccessStatus: 200,
