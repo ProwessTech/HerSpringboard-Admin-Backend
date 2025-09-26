@@ -2,7 +2,7 @@
   "name": "manage-users",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:3002"
+  "proxy": "https://herspringboard-admin.onrender.com"
 ,
 
   "dependencies": {

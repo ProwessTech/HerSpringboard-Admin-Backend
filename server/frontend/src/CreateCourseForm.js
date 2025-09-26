@@ -71,8 +71,8 @@ export default function CreateCourseForm({ course, onCourseCreated, onCourseUpda
         rating: Number(formData.rating) || 0,
       };
       const url = course
-        ? `http://localhost:3002/courses/${course.courseID || course.userId}`
-        : 'http://localhost:3002/courses';
+        ? `https://herspringboard-admin.onrender.com/courses/${course.courseID || course.userId}`
+        : 'https://herspringboard-admin.onrender.com/courses';
       const method = course ? 'PUT' : 'POST';
       const response = await fetch(url, {
         method,

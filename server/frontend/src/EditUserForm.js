@@ -43,7 +43,7 @@ export default function EditUserForm({ user, onUserUpdated, onCancel }) {
   setError(null);
 
   try {
-    const response = await fetch(`http://localhost:3002/users/${encodeURIComponent(user.email)}`, {
+    const response = await fetch(`https://herspringboard-admin.onrender.com/users/${encodeURIComponent(user.email)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),

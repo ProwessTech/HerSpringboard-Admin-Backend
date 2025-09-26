@@ -19,7 +19,7 @@ export default function App({ onLogout }) {
   const fetchUsers = async () => {
     setIsUsersLoading(true);
     try {
-      const response = await fetch('http://localhost:3002/users');
+      const response = await fetch('https://herspringboard-admin.onrender.com/users');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setUsers(data);
@@ -34,7 +34,7 @@ export default function App({ onLogout }) {
   const fetchCourses = async () => {
     setIsCoursesLoading(true);
     try {
-      const response = await fetch('http://localhost:3002/courses');
+      const response = await fetch('https://herspringboard-admin.onrender.com/courses');
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const data = await response.json();
       setCourses(data);
@@ -58,7 +58,7 @@ export default function App({ onLogout }) {
   const handleDeleteUser = async (email) => {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
-      const res = await fetch(`http://localhost:3002/users/${email}`, { method: 'DELETE' });
+      const res = await fetch(`https://herspringboard-admin.onrender.com/users/${email}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete user');
       await fetchUsers();
     } catch (err) {
@@ -72,7 +72,7 @@ export default function App({ onLogout }) {
   const handleDeleteCourse = async (courseId, userId) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
     try {
-      const res = await fetch(`http://localhost:3002/courses/${courseId}`, {
+      const res = await fetch(`https://herspringboard-admin.onrender.com/courses/${courseId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId }),
