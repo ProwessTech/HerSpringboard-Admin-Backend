@@ -1,29 +1,28 @@
-import express from 'express';
-import cors from 'cors';
-import { v4 as uuidv4 } from 'uuid';
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-import bodyParser from 'body-parser';
-import dotenv from 'dotenv';
+const express = require('express');
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
+const AWS = require('aws-sdk');
+const bodyParser = require('body-parser');
+require('dotenv').config();
 //render code
-import path from 'path';
-import { fileURLToPath } from 'url';
-dotenv.config();
+const path = require('path');
+//dotenv.config();
 const app = express();
-const port = 3000;
+const port = 3002;
 const corsOptions = {
   origin: 'https://her-springboard-admin.vercel.app',
   optionsSuccessStatus: 200,
   credentials: true,
 };
 // Get __dirname in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
-const client = new DynamoDBClient({ region: process.env.AWS_REGION });
-
-const dynamoDb = DynamoDBDocumentClient.from(client);
+AWS.config.update({
+  region: process.env.AWS_REGION,
+});
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 // ===== USERS =====
 app.get('/users', async (req, res) => {
   const params = {
@@ -38,7 +37,6 @@ app.get('/users', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post('/users', async (req, res) => {
   const {
     email, category, courseCompleted, coursesInProgress, emailVerified,
@@ -245,9 +243,8 @@ app.delete('/courses/:courseId', async (req, res) => {
 //use static files from the React app
 app.use(express.static(path.join(__dirname, 'frontend/build')));
 app.get('*', (req, res) => {
-  res.send('Server is running Successfully');
+  res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
-
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
